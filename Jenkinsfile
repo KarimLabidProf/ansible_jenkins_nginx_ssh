@@ -9,7 +9,7 @@ pipeline {
 
         stage('Start Docker container') {
             steps {
-                bat 'docker run -d --name ubuntu_nginx -p 2222:22 -p 8080:80 rastasheep/ubuntu-sshd:18.04'
+                bat 'docker run -d --name ubuntu_nginx -p 2222:22 -p 85:80 rastasheep/ubuntu-sshd:18.04'
             }
         }
 
