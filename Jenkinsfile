@@ -1,30 +1,33 @@
 pipeline {
     agent any
+    environment {
+        CONTAINER_NAME = 'ubuntu_nginx'
+    }
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/KarimLabidProf/ansible-jenkins-nginx-ssh.git'
+                git url: 'https://github.com/KarimLabidProf/ansible_jenkins_nginx_ssh.git', branch: 'main'
             }
         }
 
         stage('Start Docker container') {
             steps {
-                bat 'docker run -d --name ubuntu_nginx -p 2222:22 -p 85:80 rastasheep/ubuntu-sshd:18.04'
+                bat 'docker run -d --name %CONTAINER_NAME% -p 2222:22 rastasheep/ubuntu-sshd:18.04'
             }
         }
 
         stage('Run Ansible Playbook') {
             steps {
                 bat '''
-                wsl ansible-playbook -i /mnt/c/ProgramData/Jenkins/.jenkins/workspace/ansible-Test-nginx/inventories/inventory.ini ^
-                /mnt/c/ProgramData/Jenkins/.jenkins/workspace/ansible-Test-nginx/playbooks/install-nginx.yml
+                    wsl ansible-playbook -i /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${JOB_NAME}/inventories/inventory.ini \
+                    /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${JOB_NAME}/playbooks/install-nginx.yml
                 '''
             }
         }
 
         stage('Verify Nginx container') {
             steps {
-                bat 'curl http://localhost:8080 || echo "Nginx non disponible"'
+                bat 'curl http://localhost:8080 || exit 1'
             }
         }
     }
@@ -32,8 +35,8 @@ pipeline {
     post {
         always {
             echo 'Nettoyage...'
-            bat 'docker stop ubuntu_nginx || exit 0'
-            bat 'docker rm ubuntu_nginx || exit 0'
+            bat 'docker stop %CONTAINER_NAME% || exit 0'
+            bat 'docker rm %CONTAINER_NAME% || exit 0'
         }
     }
 }
